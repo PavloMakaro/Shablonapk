@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jarvis</title>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js for code block syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-container">
+            <h1>Jarvis</h1>
+            <p>Welcome back</p>
+            <div class="tabs">
+                <button id="tab-login" class="active" onclick="switchTab('login')">Login</button>
+                <button id="tab-register" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <form id="auth-form">
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit" id="auth-btn">Login</button>
+            </form>
+            <div id="auth-error" class="error-msg"></div>
+        </div>
+    </div>
+
+    <!-- Chat Screen -->
+    <div id="chat-screen" class="screen hidden">
+        <header class="chat-header">
+            <div class="header-title">Jarvis</div>
+            <button id="logout-btn" class="icon-btn">Logout</button>
+        </header>
+
+        <div id="chat-container" class="chat-container">
+            <div class="welcome-message" id="welcome-message">
+                <h2>How can I help you today?</h2>
+            </div>
+            <!-- Messages will be appended here -->
+        </div>
+
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea id="message-input" placeholder="Message Jarvis..." rows="1"></textarea>
+                <button id="send-btn" class="send-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="disclaimer">Jarvis can make mistakes. Please verify important information.</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
