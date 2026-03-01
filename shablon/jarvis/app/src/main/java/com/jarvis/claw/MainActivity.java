@@ -2,9 +2,13 @@ package com.jarvis.claw;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -15,9 +19,18 @@ import android.widget.Toast;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+
 public class MainActivity extends Activity {
+
+    private static final int PICK_FILE_REQUEST = 1;
 
     private ListView lvChat;
     private EditText etMessage;
@@ -30,7 +43,7 @@ public class MainActivity extends Activity {
     private Vibrator vibrator;
 
     private ChatMessage currentBotMessage;
-    private String currentChatId = "default_chat_id"; // Mock ID or dynamic ID
+    private String currentChatId = "default_user";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +52,7 @@ public class MainActivity extends Activity {
 
         prefs = getSharedPreferences("JarvisPrefs", MODE_PRIVATE);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        currentChatId = prefs.getString("username", "default_user");
 
         lvChat = findViewById(R.id.lvChat);
         etMessage = findViewById(R.id.etMessage);
@@ -82,8 +96,10 @@ public class MainActivity extends Activity {
         btnAttach.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Add actual file picker logic here as needed for native integration
-                Toast.makeText(MainActivity.this, "File attachment not yet implemented", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("*/*");
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                startActivityForResult(Intent.createChooser(intent, "Select a file to upload"), PICK_FILE_REQUEST);
             }
         });
 
@@ -172,7 +188,7 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(final Throwable t) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -235,6 +251,99 @@ public class MainActivity extends Activity {
                 lvChat.setSelection(adapter.getCount() - 1);
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PICK_FILE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri uri = data.getData();
+            uploadFile(uri);
+        }
+    }
+
+    private void uploadFile(Uri uri) {
+        try {
+            String tempFileName = "upload";
+            Cursor returnCursor = getContentResolver().query(uri, null, null, null, null);
+            if (returnCursor != null) {
+                int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (returnCursor.moveToFirst()) {
+                    tempFileName = returnCursor.getString(nameIndex);
+                }
+                returnCursor.close();
+            }
+
+            File tempFile = new File(getCacheDir(), tempFileName);
+            InputStream is = getContentResolver().openInputStream(uri);
+            FileOutputStream fos = new FileOutputStream(tempFile);
+            byte[] buf = new byte[8192];
+            int len;
+            while ((len = is.read(buf)) > 0) {
+                fos.write(buf, 0, len);
+            }
+            fos.close();
+            is.close();
+
+            Toast.makeText(this, "Uploading...", Toast.LENGTH_SHORT).show();
+
+            String token = prefs.getString("token", "");
+            RequestBody requestBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("file", tempFile.getName(),
+                            RequestBody.create(MediaType.parse("application/octet-stream"), tempFile))
+                    .build();
+
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url(ApiClient.BASE_URL + "/upload")
+                    .addHeader("Authorization", "Bearer " + token)
+                    .post(requestBody)
+                    .build();
+
+            ApiClient.getClient().newCall(request).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(okhttp3.Call call, java.io.IOException e) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "Upload failed", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onResponse(okhttp3.Call call, okhttp3.Response response) throws java.io.IOException {
+                    if (response.isSuccessful()) {
+                        try {
+                            String body = response.body().string();
+                            JSONObject json = new JSONObject(body);
+                            final String serverFilePath = json.getString("filepath");
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(MainActivity.this, "Uploaded", Toast.LENGTH_SHORT).show();
+                                    String attachmentRef = "[File: " + serverFilePath + "]";
+                                    sendMessage(attachmentRef);
+                                }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(MainActivity.this, "Upload error", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "File read error", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
