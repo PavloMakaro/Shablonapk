@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jarvis</title>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js for code block syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- Tailwind CSS for layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-white text-gray-900 font-sans antialiased overflow-hidden flex flex-col h-screen">
+
+<!-- Auth Screen -->
+<div id="auth-screen" class="absolute inset-0 bg-white z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+    <div class="w-full max-w-md">
+        <h1 class="text-4xl font-serif font-medium text-center mb-2">Jarvis</h1>
+        <p class="text-center text-gray-500 mb-8">Welcome back</p>
+
+        <div class="flex border-b mb-6">
+            <button id="tab-login" class="flex-1 py-3 text-center border-b-2 border-black font-medium" onclick="switchTab('login')">Login</button>
+            <button id="tab-register" class="flex-1 py-3 text-center text-gray-500 border-b-2 border-transparent font-medium" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <form id="auth-form" class="space-y-4">
+            <input type="text" id="username" placeholder="Username" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition-colors">
+            <input type="password" id="password" placeholder="Password" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition-colors">
+            <input type="text" id="accessCode" placeholder="Access Code (Requires Link)" class="hidden w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition-colors">
+            <button type="submit" id="auth-btn" class="w-full py-4 bg-black text-white rounded-xl font-medium mt-2 hover:bg-gray-800 transition-colors">Login</button>
+        </form>
+        <div id="auth-error" class="text-red-500 text-sm mt-4 text-center min-h-[20px]"></div>
+    </div>
+</div>
+
+<!-- Main App -->
+<div id="main-app" class="hidden flex-col h-full w-full relative">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 z-10 shrink-0">
+        <button id="menuBtn" class="text-gray-500 hover:text-gray-900 p-2 -ml-2">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+
+        <h1 class="text-xl font-serif font-medium text-gray-900">Jarvis</h1>
+
+        <div class="flex items-center gap-2">
+            <button id="newChatBtn" class="text-gray-500 hover:text-gray-900 p-2">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Chat Area -->
+    <main id="chat-container" class="flex-1 overflow-y-auto w-full max-w-3xl mx-auto px-4 pt-6 pb-32 no-scrollbar scroll-smooth">
+        <!-- Greeting State -->
+        <div id="newChatState" class="flex flex-col items-center justify-center h-full -mt-10">
+            <h2 class="text-3xl font-serif text-gray-800 text-center max-w-xs leading-tight">Good morning</h2>
+        </div>
+
+        <!-- Active Chat State -->
+        <div id="activeChatState" class="hidden flex-col w-full pb-4">
+            <!-- Messages injected here -->
+        </div>
+    </main>
+
+    <!-- Bottom Input Area -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pt-6 pb-4 px-4 z-20">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-gray-100 rounded-3xl p-2 pl-4 flex items-end shadow-sm border border-gray-200 focus-within:border-gray-300 focus-within:bg-white transition-all">
+
+                <button id="attachBtn" class="p-2 -ml-2 text-gray-500 hover:text-gray-700 shrink-0 mb-0.5" aria-label="Attach file">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                </button>
+
+                <textarea id="chatInput" rows="1" placeholder="Message Jarvis..." class="flex-1 bg-transparent text-gray-900 placeholder-gray-500 outline-none px-2 py-2.5 min-h-[44px] max-h-32 resize-none no-scrollbar text-[16px] leading-relaxed"></textarea>
+
+                <button id="sendBtn" class="hidden p-2 bg-black text-white rounded-full shrink-0 mb-0.5 ml-2 hover:bg-gray-800 transition-colors" aria-label="Send message">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="text-center mt-2">
+                <span class="text-[11px] text-gray-400">Jarvis can make mistakes. Please verify information.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebarBackdrop" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity"></div>
+<div id="sidebar" class="fixed inset-y-0 left-0 w-[80%] max-w-[320px] bg-white z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-xl border-r border-gray-100">
+    <div class="p-4 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#e8e4dc] flex items-center justify-center text-gray-700 font-medium text-lg">U</div>
+            <div class="flex-1">
+                <h3 class="font-medium text-gray-900">User</h3>
+            </div>
+        </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 no-scrollbar">
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Recent</h3>
+        <div id="sidebar-history-list" class="space-y-1">
+            <div class="text-sm text-gray-400 py-2">No history yet</div>
+        </div>
+    </div>
+    <div class="p-4 border-t border-gray-100">
+        <button id="logoutBtn" class="flex items-center gap-3 text-gray-600 hover:text-gray-900 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
+        </button>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
