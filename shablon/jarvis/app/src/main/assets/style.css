@@ -1,3 +1,252 @@
-/* We are mostly relying on Tailwind CSS included via script tag in index.html now.
-   But keep global overrides here if needed.
-*/
+/* Base styles */
+body {
+    background-color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    color: #171717;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* Hide scrollbar but allow scrolling */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Typography */
+.serif-text {
+    font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Auth Card Styling */
+#auth-screen {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #f9f9f9;
+    color: #1c1c1c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.auth-card {
+    background-color: white;
+    padding: 2.5rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.auth-card h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.auth-card p {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.tabs button {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #666;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tabs button.active {
+    color: #000;
+    border-bottom-color: #000;
+    font-weight: 500;
+}
+
+#auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#auth-form input {
+    padding: 1rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#auth-form input:focus {
+    border-color: #000;
+}
+
+#auth-form button[type="submit"] {
+    background-color: #111;
+    color: white;
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+#auth-form button[type="submit"]:hover {
+    opacity: 0.9;
+}
+
+.error-msg {
+    color: #d32f2f;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    min-height: 1.2rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Animations */
+.slide-up {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-in {
+    transition: opacity 0.3s ease;
+}
+
+/* Chat Input Gradient */
+.bottom-gradient {
+    background: linear-gradient(to top, #ffffff 30%, transparent 100%);
+}
+
+/* Message Styles */
+.message {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px;
+    animation: fadeIn 0.3s ease;
+}
+
+.message-user {
+    align-self: flex-end;
+    background-color: #f3f4f6;
+    padding: 12px 18px;
+    border-radius: 20px;
+    max-width: 85%;
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.message-bot {
+    align-self: flex-start;
+    padding: 4px 0;
+    width: 100%;
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Markdown Styling inside Messages */
+.message-content p {
+    margin-bottom: 0.75em;
+}
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.message-content pre {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    border: 1px solid #e5e7eb;
+}
+
+.message-content code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9em;
+    color: #24292f;
+}
+
+.message-content p code {
+    background-color: #f3f4f6;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    color: #cb2431;
+}
+
+/* Thinking block (Claude style) */
+.thinking-block {
+    background-color: #f9fafb;
+    border-left: 3px solid #d1d5db;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border-radius: 0 8px 8px 0;
+    color: #6b7280;
+    font-style: italic;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.thinking-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
+.typing-cursor::after {
+    content: '▋';
+    animation: blink 1s step-end infinite;
+    color: #9ca3af;
+    margin-left: 4px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Media handling */
+.message-media {
+    max-width: 100%;
+    border-radius: 12px;
+    margin: 8px 0;
+    border: 1px solid #e5e7eb;
+}

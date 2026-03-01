@@ -7,439 +7,125 @@
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Highlight.js for code block syntax highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- Tailwind CSS for layout -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500&display=swap" rel="stylesheet">
-    <style>
-        /* Скрываем скроллбары, оставляя скролл */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        body {
-            background-color: #171717; /* Темный фон */
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            color: #ececec;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .serif-text {
-            font-family: 'Playfair Display', serif; /* Для элегантных заголовков */
-        }
-
-        .app-container {
-            width: 100%;
-            height: 100%;
-            max-width: 600px;
-            background-color: #171717;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Анимации для шторок и сайдбара */
-        .slide-up {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .fade-in {
-            transition: opacity 0.3s ease;
-        }
-
-        /* Градиент для инпута */
-        .bottom-gradient {
-            background: linear-gradient(to top, #171717 30%, transparent 100%);
-        }
-
-        /* Экран авторизации */
-        #auth-screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #f8f8f8; /* Светлый фон как на скринах */
-            color: #1c1c1c;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-
-        .auth-card {
-            background-color: white;
-            padding: 2.5rem 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .auth-card h1 {
-            font-size: 2.2rem;
-            font-weight: 600;
-            margin-bottom: 0.2rem;
-        }
-
-        .auth-card p {
-            color: #666;
-            margin-bottom: 2rem;
-        }
-
-        .tabs {
-            display: flex;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid #e5e5e5;
-        }
-
-        .tabs button {
-            flex: 1;
-            background: none;
-            border: none;
-            padding: 0.75rem;
-            font-size: 1.1rem;
-            cursor: pointer;
-            color: #666;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .tabs button.active {
-            color: #000;
-            border-bottom-color: #000;
-            font-weight: 500;
-        }
-
-        #auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        #auth-form input {
-            padding: 1rem;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.2s;
-            width: 100%;
-        }
-
-        .tool-use-block {
-            background-color: #2a2a2c;
-            border-left: 3px solid #7fa1f5;
-            padding: 10px 14px;
-            margin: 8px 0;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.85em;
-            color: #d1d5db;
-        }
-
-        .observation-block {
-            background-color: #1e1e1e;
-            border: 1px dashed #444;
-            padding: 10px 14px;
-            margin: 8px 0;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.85em;
-            color: #9ca3af;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        #auth-form input:focus {
-            border-color: #000;
-        }
-
-        #auth-form button[type="submit"] {
-            background-color: #111;
-            color: white;
-            border: none;
-            padding: 1rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            font-weight: 500;
-            margin-top: 0.5rem;
-            width: 100%;
-        }
-
-        #auth-form button[type="submit"]:hover {
-            opacity: 0.9;
-        }
-
-        .error-msg {
-            color: #d32f2f;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            min-height: 1.2rem;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Message blocks */
-        .message-content pre {
-            background-color: #2a2a2c;
-            border-radius: 6px;
-            padding: 1rem;
-            overflow-x: auto;
-            margin: 0.5rem 0;
-            border: 1px solid #3f3f3f;
-        }
-
-        .message-content code {
-            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-            font-size: 0.9em;
-        }
-
-        .message-content p code {
-            background-color: #2a2a2c;
-            padding: 0.2em 0.4em;
-            border-radius: 3px;
-            font-size: 0.85em;
-            color: #c0846c;
-        }
-
-        .thinking-block {
-            color: #a3a3a3;
-            font-style: italic;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .thinking-dots::after {
-            content: '';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
-
-        .typing-cursor::after {
-            content: '▋';
-            animation: blink 1s step-end infinite;
-            color: #fff;
-            margin-left: 2px;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="bg-white text-gray-900 font-sans antialiased overflow-hidden flex flex-col h-screen">
 
-<!-- Экран Авторизации -->
-<div id="auth-screen">
-    <div class="auth-card">
-        <h1>Jarvis</h1>
-        <p>Welcome back</p>
-        <div class="tabs">
-            <button id="tab-login" class="active" onclick="switchTab('login')">Login</button>
-            <button id="tab-register" onclick="switchTab('register')">Register</button>
+<!-- Auth Screen -->
+<div id="auth-screen" class="absolute inset-0 bg-white z-50 flex items-center justify-center p-4 transition-opacity duration-300">
+    <div class="w-full max-w-md">
+        <h1 class="text-4xl font-serif font-medium text-center mb-2">Jarvis</h1>
+        <p class="text-center text-gray-500 mb-8">Welcome back</p>
+
+        <div class="flex border-b mb-6">
+            <button id="tab-login" class="flex-1 py-3 text-center border-b-2 border-black font-medium" onclick="switchTab('login')">Login</button>
+            <button id="tab-register" class="flex-1 py-3 text-center text-gray-500 border-b-2 border-transparent font-medium" onclick="switchTab('register')">Register</button>
         </div>
 
-        <form id="auth-form">
-            <input type="text" id="username" placeholder="Username" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <!-- Поле для кода доступа (скрыто по умолчанию) -->
-            <input type="text" id="accessCode" placeholder="Invite / Access Code" class="hidden">
-            <button type="submit" id="auth-btn">Login</button>
+        <form id="auth-form" class="space-y-4">
+            <input type="text" id="username" placeholder="Username" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition-colors">
+            <input type="password" id="password" placeholder="Password" required class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition-colors">
+            <input type="text" id="accessCode" placeholder="Access Code (Requires Link)" class="hidden w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition-colors">
+            <button type="submit" id="auth-btn" class="w-full py-4 bg-black text-white rounded-xl font-medium mt-2 hover:bg-gray-800 transition-colors">Login</button>
         </form>
-        <div id="auth-error" class="error-msg"></div>
+        <div id="auth-error" class="text-red-500 text-sm mt-4 text-center min-h-[20px]"></div>
     </div>
 </div>
 
-<div class="app-container hidden" id="main-app">
+<!-- Main App -->
+<div id="main-app" class="hidden flex-col h-full w-full relative">
 
-    <!-- ================= HEADER ================= -->
-    <header class="flex items-center justify-between px-4 py-3 shrink-0 z-20 bg-[#171717]">
-        <!-- Hamburger Menu (Opens Sidebar) -->
-        <button id="menuBtn" class="text-[#a3a3a3] hover:text-white transition-colors p-1 -ml-1">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    <!-- Header -->
+    <header class="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 z-10 shrink-0">
+        <button id="menuBtn" class="text-gray-500 hover:text-gray-900 p-2 -ml-2">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
         </button>
 
-        <!-- Model Selector Toggle & Tabs -->
-        <div class="flex items-center gap-4">
-            <div id="modelSelectBtn" class="flex items-center gap-1 cursor-pointer">
-                <h1 class="text-[#f1f1f1] text-[17px] font-medium tracking-wide" id="currentModelName">Jarvis</h1>
-                <svg class="w-4 h-4 text-[#a3a3a3] mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-            </div>
+        <h1 class="text-xl font-serif font-medium text-gray-900">Jarvis</h1>
 
-            <!-- File Manager Tab -->
-            <button id="fileManagerTabBtn" class="text-[#a3a3a3] hover:text-white transition-colors text-sm font-medium px-2 py-1 rounded border border-transparent hover:border-[#3f3f3f] flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        <div class="flex items-center gap-2">
+            <button id="newChatBtn" class="text-gray-500 hover:text-gray-900 p-2">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                Files
             </button>
         </div>
-
-        <!-- New Chat Button (Ghost Icon) -->
-        <button id="newChatBtn" class="text-[#a3a3a3] hover:text-white transition-colors p-1 -mr-1">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-        </button>
     </header>
 
-    <!-- Optional Pro Banner (Hidden for now to keep clean UI like in chat) -->
-    <div id="proBanner" class="hidden mx-4 mt-2 mb-2 bg-[#212121] border border-[#333] rounded-lg px-4 py-3 flex justify-between items-center z-10">
-        <span class="text-[14px] text-gray-300">Get more with Jarvis Pro</span>
-        <button class="text-[#c0846c] text-[14px] font-medium">Upgrade</button>
+    <!-- Chat Area -->
+    <main id="chat-container" class="flex-1 overflow-y-auto w-full max-w-3xl mx-auto px-4 pt-6 pb-32 no-scrollbar scroll-smooth">
+        <!-- Greeting State -->
+        <div id="newChatState" class="flex flex-col items-center justify-center h-full -mt-10">
+            <h2 class="text-3xl font-serif text-gray-800 text-center max-w-xs leading-tight">Good morning</h2>
+        </div>
+
+        <!-- Active Chat State -->
+        <div id="activeChatState" class="hidden flex-col w-full pb-4">
+            <!-- Messages injected here -->
+        </div>
+    </main>
+
+    <!-- Bottom Input Area -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent pt-6 pb-4 px-4 z-20">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-gray-100 rounded-3xl p-2 pl-4 flex items-end shadow-sm border border-gray-200 focus-within:border-gray-300 focus-within:bg-white transition-all">
+
+                <button id="attachBtn" class="p-2 -ml-2 text-gray-500 hover:text-gray-700 shrink-0 mb-0.5" aria-label="Attach file">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                </button>
+
+                <textarea id="chatInput" rows="1" placeholder="Message Jarvis..." class="flex-1 bg-transparent text-gray-900 placeholder-gray-500 outline-none px-2 py-2.5 min-h-[44px] max-h-32 resize-none no-scrollbar text-[16px] leading-relaxed"></textarea>
+
+                <button id="sendBtn" class="hidden p-2 bg-black text-white rounded-full shrink-0 mb-0.5 ml-2 hover:bg-gray-800 transition-colors" aria-label="Send message">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="text-center mt-2">
+                <span class="text-[11px] text-gray-400">Jarvis can make mistakes. Please verify information.</span>
+            </div>
+        </div>
     </div>
+</div>
 
-    <!-- ================= MAIN CHAT AREA ================= -->
-    <main class="flex-1 overflow-y-auto no-scrollbar relative z-10 px-4 flex flex-col pb-32" id="chat-container">
-
-        <!-- STATE 1: NEW CHAT SCREEN (Visible by default) -->
-        <div id="newChatState" class="flex-1 flex flex-col items-center justify-center -mt-10">
-            <!-- Animated Star Icon (SVG Approximation) -->
-            <svg class="w-12 h-12 text-[#c0846c] mb-6 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L12 6M12 18L12 22M4.9282 4.9282L7.75664 7.75664M16.2434 16.2434L19.0718 19.0718M2 12L6 12M18 12L22 12M4.9282 19.0718L7.75664 16.2434M16.2434 7.75664L19.0718 4.9282" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+<!-- Sidebar -->
+<div id="sidebarBackdrop" class="fixed inset-0 bg-black/40 z-40 hidden opacity-0 transition-opacity"></div>
+<div id="sidebar" class="fixed inset-y-0 left-0 w-[80%] max-w-[320px] bg-white z-50 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-xl border-r border-gray-100">
+    <div class="p-4 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-[#e8e4dc] flex items-center justify-center text-gray-700 font-medium text-lg">U</div>
+            <div class="flex-1">
+                <h3 class="font-medium text-gray-900">User</h3>
+            </div>
+        </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 no-scrollbar">
+        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Recent</h3>
+        <div id="sidebar-history-list" class="space-y-1">
+            <div class="text-sm text-gray-400 py-2">No history yet</div>
+        </div>
+    </div>
+    <div class="p-4 border-t border-gray-100">
+        <button id="logoutBtn" class="flex items-center gap-3 text-gray-600 hover:text-gray-900 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <h2 class="serif-text text-[32px] text-[#f1f1f1] text-center leading-tight max-w-[280px]">
-                How can I help you this morning?
-            </h2>
-        </div>
-
-        <!-- STATE 2: ACTIVE CHAT SCREEN -->
-        <div id="activeChatState" class="hidden flex-col gap-6 pt-4 w-full">
-            <!-- Messages will be injected here via app.js -->
-        </div>
-
-    </main>
-
-    <!-- ================= FILE MANAGER AREA ================= -->
-    <main class="hidden flex-1 overflow-y-auto no-scrollbar relative z-10 px-4 pt-4 pb-32 w-full" id="file-manager-container">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-semibold text-[#f1f1f1]">Shared Files</h2>
-            <div class="text-sm text-gray-400" id="fileCount">0 files</div>
-        </div>
-
-        <div id="fileGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <!-- File items will be injected here -->
-            <div class="col-span-full text-center text-gray-500 py-10" id="emptyFilesMsg">
-                No files have been shared in this conversation yet.
-            </div>
-        </div>
-    </main>
-
-    <!-- ================= INPUT AREA ================= -->
-    <div class="absolute bottom-0 left-0 right-0 h-40 bottom-gradient pointer-events-none z-20"></div>
-
-    <div class="absolute bottom-0 left-0 right-0 px-3 pb-5 pt-2 z-30">
-        <div class="bg-[#2a2a2c] rounded-[28px] p-2 flex items-center shadow-lg border border-[#3f3f3f]">
-
-            <!-- Plus Button (Opens Attachment Menu) -->
-            <button id="attachBtn" class="w-10 h-10 flex items-center justify-center text-[#a3a3a3] hover:text-white shrink-0">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-            </button>
-
-            <!-- Text Input -->
-            <input type="text" id="chatInput" placeholder="Message Jarvis..." class="flex-1 bg-transparent text-[16px] text-[#f1f1f1] placeholder-[#8e8e8e] outline-none px-2 h-full min-w-0 font-normal">
-
-            <!-- Right Icons Container -->
-            <div class="flex items-center gap-1.5 shrink-0 pr-1">
-                <!-- Mic Button (Default) -->
-                <button id="micBtn" class="w-10 h-10 flex items-center justify-center text-[#a3a3a3] hover:text-white transition-all">
-                    <svg class="w-[22px] h-[22px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-                    </svg>
-                </button>
-
-                <!-- Send Button (Hidden by default, shows when typing) -->
-                <button id="sendBtn" class="hidden w-9 h-9 bg-[#c0846c] rounded-full flex items-center justify-center text-white transition-all">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= SIDEBAR (Kimi Style Chat History) ================= -->
-    <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 z-40 fade-in opacity-0 pointer-events-none"></div>
-
-    <div id="sidebar" class="fixed inset-y-0 left-0 w-[85%] max-w-[320px] bg-[#1c1c1c] z-50 transform -translate-x-full slide-up flex flex-col shadow-2xl">
-        <!-- Sidebar Header (Profile) -->
-        <div class="p-4 border-b border-[#2e2e2e]">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3 cursor-pointer hover:bg-[#2c2d2e] p-2 -ml-2 rounded-xl transition-colors">
-                    <div class="w-10 h-10 rounded-full bg-[#5b4038] flex items-center justify-center text-white font-bold text-lg" id="profile-initial">
-                        U
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="font-medium text-[16px]" id="profile-name">User</h3>
-                    </div>
-                </div>
-                <button id="logoutBtn" class="text-sm text-red-400 p-2 hover:bg-[#2a2a2c] rounded-lg">Logout</button>
-            </div>
-
-        </div>
-
-        <!-- History List -->
-        <div class="flex-1 overflow-y-auto no-scrollbar p-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-[18px] font-semibold text-[#f1f1f1]">Chat history</h3>
-            </div>
-            <div id="sidebar-history-list" class="space-y-2">
-                <div class="text-sm text-gray-500">Loading history...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= BOTTOM SHEETS ================= -->
-    <!-- Add to Chat Bottom Sheet -->
-    <div id="attachSheetBackdrop" class="fixed inset-0 bg-black/50 z-40 fade-in opacity-0 pointer-events-none"></div>
-    <!-- Hidden File Input for Native File Picker -->
-    <input type="file" id="fileUploadInput" class="hidden" />
-
-    <div id="attachSheet" class="fixed bottom-0 left-0 right-0 max-w-[600px] mx-auto bg-[#1e1e1e] rounded-t-3xl z-50 transform translate-y-full slide-up px-4 pb-8 pt-2">
-        <div class="w-10 h-1 bg-[#444] rounded-full mx-auto mb-4"></div>
-        <div class="flex justify-between items-center mb-6">
-            <button id="closeAttachSheet" class="p-1 text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-            <h3 class="text-[18px] font-semibold text-white">Add to chat</h3>
-            <div class="w-8"></div>
-        </div>
-        <!-- Grid Buttons -->
-        <div class="grid grid-cols-2 gap-3 mb-6">
-            <button id="btnUploadImage" class="bg-[#2a2a2c] hover:bg-[#333] border border-[#3f3f3f] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition">
-                <svg class="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-                <span class="text-sm font-medium">Photos / Video</span>
-            </button>
-            <button id="btnUploadFile" class="bg-[#2a2a2c] hover:bg-[#333] border border-[#3f3f3f] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition">
-                <svg class="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3" /></svg>
-                <span class="text-sm font-medium">Files</span>
-            </button>
-        </div>
+            Logout
+        </button>
     </div>
 </div>
 
