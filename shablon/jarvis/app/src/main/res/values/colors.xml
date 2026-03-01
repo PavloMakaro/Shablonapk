@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FFFFFF</color>
+    <color name="colorPrimaryDark">#F5F5F5</color>
+    <color name="colorAccent">#000000</color>
+
+    <color name="bg_main">#FFFFFF</color>
+    <color name="text_primary">#000000</color>
+    <color name="text_secondary">#888888</color>
+    <color name="message_user_bg">#F4F4F4</color>
+    <color name="message_agent_bg">#FFFFFF</color>
+
+    <color name="btn_bg">#000000</color>
+    <color name="btn_text">#FFFFFF</color>
+    <color name="input_bg">#F4F4F4</color>
+
+    <!-- Dark theme colors (optional, fallback to light for now) -->
+    <color name="bg_dark">#121212</color>
+    <color name="text_dark_primary">#FFFFFF</color>
+</resources>
