@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Jarvis</string>
+
+    <string name="auth_welcome">Welcome to Jarvis</string>
+    <string name="auth_username_hint">Username</string>
+    <string name="auth_password_hint">Password</string>
+    <string name="auth_login_btn">Login</string>
+    <string name="auth_register_btn">Register</string>
+
+    <string name="invite_title">Access Code Required</string>
+    <string name="invite_desc">Please enter your beta access code to continue.</string>
+    <string name="invite_code_hint">Access Code</string>
+    <string name="invite_submit_btn">Submit</string>
+
+    <string name="chat_input_hint">Type a message...</string>
+    <string name="chat_connecting">Connecting...</string>
+    <string name="chat_connected">Connected</string>
+
+    <string name="error_empty_fields">Please fill in all fields</string>
+    <string name="error_network">Network error, please try again</string>
+</resources>
