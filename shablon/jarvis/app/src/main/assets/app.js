@@ -6,6 +6,8 @@ let token = localStorage.getItem('jarvis_token');
 let ws = null;
 let currentMessageId = null;
 let isBotTyping = false;
+let currentChatId = `chat_${Date.now()}`;
+let uploadedFileRefs = [];
 
 // DOM Elements
 const authScreen = document.getElementById('auth-screen');
@@ -68,9 +70,15 @@ authForm.addEventListener('submit', async (e) => {
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
     const accessCode = accessCodeInput.value.trim();
+    const isAccessCodeVisible = !accessCodeInput.classList.contains('hidden');
 
-    if (!username || !password || !accessCode) {
-        authError.textContent = 'All fields are required';
+    if (!username || !password) {
+        authError.textContent = 'Username and password required';
+        return;
+    }
+
+    if (isAccessCodeVisible && !accessCode) {
+        authError.textContent = 'Access Code required';
         return;
     }
 
@@ -89,18 +97,33 @@ authForm.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.message || data.error || 'Authentication failed');
+            // Check if server demands an access code
+            const errText = data.message || data.error || 'Authentication failed';
+            if (errText.toLowerCase().includes('code') && errText.toLowerCase().includes('required')) {
+                accessCodeInput.classList.remove('hidden');
+                throw new Error('Please enter your Access Code and try again.');
+            }
+            throw new Error(errText);
         }
 
         const accessToken = data.access_token || data.token;
         if (!accessToken) throw new Error('No token returned from server');
 
-        // Now request the Access Code via /auth/link_code
-        await requestAccessCode(accessToken, accessCode, username);
+        if (isAccessCodeVisible && accessCode) {
+            // User provided code, try to link it
+            await requestAccessCode(accessToken, accessCode, username);
+        } else {
+            // Logged in successfully, no code needed
+            token = accessToken;
+            localStorage.setItem('jarvis_token', token);
+            localStorage.setItem('jarvis_username', username);
+            showChat();
+        }
 
     } catch (err) {
         authError.textContent = err.message;
         authBtn.disabled = false;
+        authBtn.textContent = activeTab === 'login' ? 'Login' : 'Register';
     }
 });
 
@@ -119,7 +142,7 @@ async function requestAccessCode(accessToken, accessCode, username) {
 
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.message || data.error || 'Code and valid session required');
+            throw new Error(data.message || data.error || 'Invalid access code');
         }
 
         // Save and update UI
@@ -200,6 +223,188 @@ const toggleSheet = (sheet, backdrop, show) => {
 menuBtn.addEventListener('click', () => toggleSidebar(true));
 sidebarBackdrop.addEventListener('click', () => toggleSidebar(false));
 
+// File Upload Logic
+const fileUploadInput = document.getElementById('fileUploadInput');
+const btnUploadImage = document.getElementById('btnUploadImage');
+const btnUploadFile = document.getElementById('btnUploadFile');
+
+// Audio Recording Logic
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+
+micBtn.addEventListener('click', async () => {
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) audioChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+
+                // Trigger the upload logic directly
+                appendSystemMessage(`Uploading Voice Message...`);
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch(`${API_BASE}/upload`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Upload failed');
+
+                    uploadedFileRefs.push(`[Voice: ${data.filepath}]`);
+                    appendSystemMessage(`✓ Voice Attached: ${data.filename}`);
+
+                    // Automatically send a default message with the voice note if input is empty
+                    if (messageInput.value.trim() === '') {
+                        messageInput.value = 'Voice message';
+                    }
+                    sendMessage();
+
+                } catch (err) {
+                    appendSystemMessage(`❌ Voice Upload Error: ${err.message}`);
+                }
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            micBtn.classList.add('text-red-500'); // UI Feedback
+            if (window.AndroidJS && window.AndroidJS.vibrate) window.AndroidJS.vibrate(50);
+
+        } catch (err) {
+            appendSystemMessage(`❌ Microphone Error: ${err.message}`);
+        }
+    } else {
+        // Stop recording
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+        isRecording = false;
+        micBtn.classList.remove('text-red-500');
+        if (window.AndroidJS && window.AndroidJS.vibrate) window.AndroidJS.vibrate(50);
+    }
+});
+
+btnUploadImage.addEventListener('click', () => {
+    fileUploadInput.accept = "image/*,video/*";
+    fileUploadInput.click();
+    toggleSheet(attachSheet, attachSheetBackdrop, false);
+});
+
+btnUploadFile.addEventListener('click', () => {
+    fileUploadInput.accept = "*/*";
+    fileUploadInput.click();
+    toggleSheet(attachSheet, attachSheetBackdrop, false);
+});
+
+fileUploadInput.addEventListener('change', async (e) => {
+    if (e.target.files.length === 0) return;
+    const file = e.target.files[0];
+
+    // UI Feedback
+    appendSystemMessage(`Uploading: ${file.name}...`);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch(`${API_BASE}/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Upload failed');
+
+        // Save the reference for the next message
+        const refType = file.type.startsWith('audio/') ? 'Voice' : 'File';
+        uploadedFileRefs.push(`[${refType}: ${data.filepath}]`);
+
+        appendSystemMessage(`✓ Attached: ${data.filename}`);
+    } catch (err) {
+        appendSystemMessage(`❌ Upload Error: ${err.message}`);
+    }
+    fileUploadInput.value = ''; // reset
+});
+
+// Fetch Sidebar Chats
+async function fetchChats() {
+    try {
+        const res = await fetch(`${API_BASE}/api/chats`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const chats = await res.json();
+
+        const historyList = document.getElementById('sidebar-history-list');
+        historyList.innerHTML = '';
+
+        if (!chats || chats.length === 0) {
+            historyList.innerHTML = '<div class="text-sm text-gray-500">No chats yet</div>';
+            return;
+        }
+
+        chats.forEach(chat => {
+            const chatDiv = document.createElement('div');
+            chatDiv.className = 'cursor-pointer hover:bg-[#2a2a2c] -mx-2 p-2 rounded-lg transition-colors';
+            chatDiv.innerHTML = `<p class="text-[15px] text-[#e0e0e0] truncate">${chat.title || chat.id}</p>`;
+            chatDiv.onclick = () => loadChatHistory(chat.id || chat.chat_id);
+            historyList.appendChild(chatDiv);
+        });
+    } catch(e) {
+        console.error("Failed to load chats", e);
+    }
+}
+
+async function loadChatHistory(chatId) {
+    try {
+        const res = await fetch(`${API_BASE}/api/chats/${chatId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to load history');
+        const data = await res.json();
+
+        currentChatId = chatId;
+        activeChatState.innerHTML = '';
+        toggleSidebar(false);
+
+        newChatState.classList.add('hidden');
+        activeChatState.classList.remove('hidden');
+        activeChatState.classList.add('flex');
+
+        if (data.messages) {
+            data.messages.forEach(m => {
+                const msgBlock = createMessageBlock(m.role);
+                const contentDiv = msgBlock.querySelector('.message-content');
+                if (m.role === 'assistant') {
+                    contentDiv.innerHTML = marked.parse(m.content || '');
+                    contentDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
+                } else {
+                    contentDiv.textContent = m.content;
+                }
+            });
+            scrollToBottom();
+        }
+    } catch(e) {
+        appendSystemMessage("Failed to load chat history.");
+    }
+}
+
 // Attach Handlers
 attachBtn.addEventListener('click', () => toggleSheet(attachSheet, attachSheetBackdrop, true));
 closeAttachSheet.addEventListener('click', () => toggleSheet(attachSheet, attachSheetBackdrop, false));
@@ -207,14 +412,18 @@ attachSheetBackdrop.addEventListener('click', () => toggleSheet(attachSheet, att
 
 // New Chat state handler
 newChatBtn.addEventListener('click', () => {
+    currentChatId = `chat_${Date.now()}`;
+    activeChatState.innerHTML = '';
     activeChatState.classList.add('hidden');
     activeChatState.classList.remove('flex');
     newChatState.classList.remove('hidden');
     messageInput.value = '';
+    toggleSidebar(false);
 });
 
 
 function initChat() {
+    fetchChats();
     if (ws) {
         ws.close();
     }
@@ -250,11 +459,72 @@ function initChat() {
 function handleWebSocketMessage(msg) {
     if (!msg.type) return;
 
-    if (msg.type === 'thinking_stream') {
+    if (msg.type === 'agent_state') {
+        const state = msg.data.status;
+        const content = msg.data.content;
+
         let botMsgDiv = document.getElementById(currentMessageId);
-        if (!botMsgDiv) {
-            botMsgDiv = createMessageBlock('bot', currentMessageId);
+        if (!botMsgDiv) botMsgDiv = createMessageBlock('bot', currentMessageId);
+        const contentDiv = botMsgDiv.querySelector('.message-content');
+
+        // Remove typing cursor if it exists
+        const cursor = contentDiv.querySelector('.typing-cursor');
+        if (cursor) cursor.remove();
+
+        if (state === 'thinking' || state === 'thinking_stream') {
+            contentDiv.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-[#c0846c] animate-spin" viewBox="0 0 24 24" fill="currentColor" style="animation-duration: 3s;">
+                        <path d="M12 2L12 6M12 18L12 22M4.9282 4.9282L7.75664 7.75664M16.2434 16.2434L19.0718 19.0718M2 12L6 12M18 12L22 12M4.9282 19.0718L7.75664 16.2434M16.2434 7.75664L19.0718 4.9282" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <span class="text-[#c0846c] italic">Thinking...</span>
+                </div>`;
         }
+        else if (state === 'tool_use') {
+            const toolName = msg.data.tool || 'unknown_tool';
+            const toolArgs = msg.data.args ? JSON.stringify(msg.data.args) : '';
+            contentDiv.innerHTML += `
+                <div class="tool-use-block">
+                    <div><span class="text-[#7fa1f5]">Invoking Tool:</span> ${toolName}</div>
+                    ${toolArgs ? `<div class="mt-1 text-xs opacity-70">${toolArgs}</div>` : ''}
+                </div>`;
+        }
+        else if (state === 'observation') {
+            const obsResult = content || '...';
+            contentDiv.innerHTML += `
+                <div class="observation-block">
+                    <span class="text-gray-400">Result:</span> ${obsResult}
+                </div>`;
+        }
+        else if (state === 'final_stream' || state === 'final') {
+            // Re-parse all accumulated content text to markdown and add cursor
+            const parsedHTML = marked.parse(content || '');
+            contentDiv.innerHTML = parsedHTML + (state === 'final_stream' ? '<span class="typing-cursor"></span>' : '');
+
+            // Highlight code blocks
+            contentDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
+
+            if (state === 'final') {
+                isBotTyping = false;
+                currentMessageId = null;
+                messageInput.disabled = false;
+                messageInput.focus();
+
+                // Native Vibration if available
+                if (window.AndroidJS && window.AndroidJS.vibrate) {
+                    window.AndroidJS.vibrate(50);
+                }
+
+                // Refresh chats list to update sidebar history
+                fetchChats();
+            }
+        }
+        scrollToBottom();
+    }
+    // Backward compatibility for basic streaming format
+    else if (msg.type === 'thinking_stream') {
+        let botMsgDiv = document.getElementById(currentMessageId);
+        if (!botMsgDiv) botMsgDiv = createMessageBlock('bot', currentMessageId);
         const contentDiv = botMsgDiv.querySelector('.message-content');
         contentDiv.innerHTML = `
             <div class="flex items-center gap-3">
@@ -266,26 +536,14 @@ function handleWebSocketMessage(msg) {
     }
     else if (msg.type === 'final_stream') {
         let botMsgDiv = document.getElementById(currentMessageId);
-        if (!botMsgDiv) {
-            botMsgDiv = createMessageBlock('bot', currentMessageId);
-        }
-
+        if (!botMsgDiv) botMsgDiv = createMessageBlock('bot', currentMessageId);
         const contentDiv = botMsgDiv.querySelector('.message-content');
+        const cursor = contentDiv.querySelector('.typing-cursor');
+        if (cursor) cursor.remove();
 
-        // Remove typing cursor if it exists on previous content
-        if (contentDiv.querySelector('.typing-cursor')) {
-             contentDiv.querySelector('.typing-cursor').remove();
-        }
-
-        // Render markdown with typewriter blinker class attached (or just streaming effect)
         const parsedHTML = marked.parse(msg.content || '');
         contentDiv.innerHTML = parsedHTML + '<span class="typing-cursor"></span>';
-
-        // Highlight code blocks
-        contentDiv.querySelectorAll('pre code').forEach((block) => {
-            hljs.highlightElement(block);
-        });
-
+        contentDiv.querySelectorAll('pre code').forEach((block) => hljs.highlightElement(block));
         scrollToBottom();
     }
     else if (msg.type === 'final_stream_done' || msg.type === 'done') {
@@ -297,24 +555,26 @@ function handleWebSocketMessage(msg) {
             if (cursor) cursor.remove();
         }
         currentMessageId = null;
-        sendBtn.disabled = messageInput.value.trim() === '';
         messageInput.disabled = false;
         messageInput.focus();
+
+        if (window.AndroidJS && window.AndroidJS.vibrate) window.AndroidJS.vibrate(50);
+        fetchChats();
     }
     else if (msg.type === 'bot_action') {
         let botMsgDiv = document.getElementById(currentMessageId);
-        if (!botMsgDiv) {
-            botMsgDiv = createMessageBlock('bot', currentMessageId);
-        }
+        if (!botMsgDiv) botMsgDiv = createMessageBlock('bot', currentMessageId);
         const contentDiv = botMsgDiv.querySelector('.message-content');
         const cursor = contentDiv.querySelector('.typing-cursor');
         if (cursor) cursor.remove();
 
-        const actionHtml = parseBotAction(msg.action, msg.data);
+        const actionHtml = parseBotAction(msg.action, msg.filename ? {filename: msg.filename} : msg.data);
         if (actionHtml) {
             contentDiv.innerHTML += actionHtml;
             scrollToBottom();
         }
+
+        if (window.AndroidJS && window.AndroidJS.vibrate) window.AndroidJS.vibrate(100);
     }
 }
 
@@ -425,6 +685,13 @@ function sendMessage() {
     messageInput.disabled = true;
     scrollToBottom();
 
+    // Append uploaded files context if any
+    let messageContent = text;
+    if (uploadedFileRefs.length > 0) {
+        messageContent += "\n\n" + uploadedFileRefs.join("\n");
+        uploadedFileRefs = [];
+    }
+
     // Generate new message ID for bot response
     currentMessageId = 'msg-' + Date.now();
     isBotTyping = true;
@@ -432,8 +699,9 @@ function sendMessage() {
     // Send to WS
     if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
-            type: 'user_message',
-            content: text
+            action: 'chat',
+            chat_id: currentChatId,
+            message: messageContent
         }));
 
         // Pre-create bot block
