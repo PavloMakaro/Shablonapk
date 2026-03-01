@@ -23,6 +23,14 @@ const tabRegister = document.getElementById('tab-register');
 const logoutBtn = document.getElementById('logoutBtn');
 const mainApp = document.getElementById('main-app');
 
+// File Manager DOM & State
+const fileManagerTabBtn = document.getElementById('fileManagerTabBtn');
+const fileManagerContainer = document.getElementById('file-manager-container');
+const fileGrid = document.getElementById('fileGrid');
+const emptyFilesMsg = document.getElementById('emptyFilesMsg');
+const fileCount = document.getElementById('fileCount');
+let sharedFiles = []; // Array to keep track of shared media/files
+
 // New App Container elements
 const chatContainer = document.getElementById('chat-container');
 const newChatState = document.getElementById('newChatState');
@@ -381,6 +389,8 @@ async function loadChatHistory(chatId) {
 
         currentChatId = chatId;
         activeChatState.innerHTML = '';
+        sharedFiles = []; // Reset files
+        updateFileManagerUI();
         toggleSidebar(false);
 
         newChatState.classList.add('hidden');
@@ -418,6 +428,8 @@ newChatBtn.addEventListener('click', () => {
     activeChatState.classList.remove('flex');
     newChatState.classList.remove('hidden');
     messageInput.value = '';
+    sharedFiles = []; // Reset files
+    updateFileManagerUI();
     toggleSidebar(false);
 });
 
@@ -582,6 +594,22 @@ function parseBotAction(action, data) {
     if (!data || !data.filename) return '';
     const fileUrl = `${API_BASE}/download/${data.filename}`;
 
+    // Add to shared files list
+    let fileType = 'document';
+    if (action === 'send_photo' || action === 'send_image') fileType = 'image';
+    else if (action === 'send_video') fileType = 'video';
+    else if (action === 'send_audio') fileType = 'audio';
+
+    sharedFiles.push({
+        type: fileType,
+        url: fileUrl,
+        name: data.filename,
+        timestamp: new Date().toLocaleTimeString()
+    });
+    if (typeof updateFileManagerUI === 'function') {
+        updateFileManagerUI();
+    }
+
     if (action === 'send_photo' || action === 'send_image') {
         return `<img src="${fileUrl}" alt="Bot sent image" loading="lazy" class="rounded-xl mt-2 max-w-full" />`;
     }
@@ -720,3 +748,78 @@ function sendMessage() {
 }
 
 sendBtn.addEventListener('click', sendMessage);
+
+// --- File Manager Logic ---
+fileManagerTabBtn.addEventListener('click', () => {
+    // Toggle active state styling on buttons
+    fileManagerTabBtn.classList.add('bg-[#2a2a2c]', 'text-white', 'border-[#3f3f3f]');
+    fileManagerTabBtn.classList.remove('text-[#a3a3a3]', 'border-transparent');
+
+    // Hide chat, show file manager
+    chatContainer.classList.add('hidden');
+    fileManagerContainer.classList.remove('hidden');
+    updateFileManagerUI();
+});
+
+// To return to chat, clicking model select area toggles back
+document.getElementById('modelSelectBtn').addEventListener('click', () => {
+    // Reset file tab styling
+    fileManagerTabBtn.classList.remove('bg-[#2a2a2c]', 'text-white', 'border-[#3f3f3f]');
+    fileManagerTabBtn.classList.add('text-[#a3a3a3]', 'border-transparent');
+
+    // Hide file manager, show chat
+    fileManagerContainer.classList.add('hidden');
+    chatContainer.classList.remove('hidden');
+});
+
+function updateFileManagerUI() {
+    fileCount.textContent = `${sharedFiles.length} file${sharedFiles.length !== 1 ? 's' : ''}`;
+
+    if (sharedFiles.length === 0) {
+        fileGrid.innerHTML = '';
+        emptyFilesMsg.classList.remove('hidden');
+        fileGrid.appendChild(emptyFilesMsg);
+        return;
+    }
+
+    emptyFilesMsg.classList.add('hidden');
+    fileGrid.innerHTML = '';
+
+    sharedFiles.forEach(file => {
+        const card = document.createElement('div');
+        card.className = 'bg-[#2a2a2c] rounded-xl overflow-hidden border border-[#3f3f3f] flex flex-col cursor-pointer hover:border-[#555] transition-colors relative group';
+        card.onclick = () => window.open(file.url, '_blank');
+
+        let previewHtml = '';
+        if (file.type === 'image') {
+            previewHtml = `<div class="h-32 bg-[#1c1c1c] w-full flex items-center justify-center overflow-hidden">
+                <img src="${file.url}" class="object-cover w-full h-full" alt="${file.name}">
+            </div>`;
+        } else if (file.type === 'video') {
+             previewHtml = `<div class="h-32 bg-[#1c1c1c] w-full flex items-center justify-center relative">
+                <video src="${file.url}" class="object-cover w-full h-full opacity-70"></video>
+                <div class="absolute inset-0 flex items-center justify-center"><svg class="w-10 h-10 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+            </div>`;
+        } else if (file.type === 'audio') {
+             previewHtml = `<div class="h-32 bg-[#1c1c1c] w-full flex items-center justify-center">
+                 <svg class="w-12 h-12 text-[#a3a3a3]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            </div>`;
+        } else {
+            previewHtml = `<div class="h-32 bg-[#1c1c1c] w-full flex items-center justify-center">
+                 <svg class="w-12 h-12 text-[#a3a3a3]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+            </div>`;
+        }
+
+        card.innerHTML = `
+            ${previewHtml}
+            <div class="p-3">
+                <p class="text-[13px] text-[#f1f1f1] font-medium truncate">${file.name}</p>
+                <p class="text-[11px] text-[#8e8e8e] mt-1">${file.timestamp}</p>
+            </div>
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                 <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </div>
+        `;
+        fileGrid.appendChild(card);
+    });
+}

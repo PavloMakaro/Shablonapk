@@ -1,1 +1,8 @@
-/build
+*.class
+.gradle/
+build/
+app/build/
+*.dex
+*.apk
+*.ap_
+*.aab

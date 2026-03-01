@@ -106,11 +106,6 @@ public class MainActivity extends Activity
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    permissions.add(Manifest.permission.POST_NOTIFICATIONS);
-                }
-            }
 
             if (!permissions.isEmpty()) {
                 requestPermissions(permissions.toArray(new String[0]), 100);

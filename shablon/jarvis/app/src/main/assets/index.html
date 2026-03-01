@@ -282,12 +282,22 @@
             </svg>
         </button>
 
-        <!-- Model Selector Toggle -->
-        <div id="modelSelectBtn" class="flex items-center gap-1 cursor-pointer">
-            <h1 class="text-[#f1f1f1] text-[17px] font-medium tracking-wide" id="currentModelName">Jarvis</h1>
-            <svg class="w-4 h-4 text-[#a3a3a3] mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+        <!-- Model Selector Toggle & Tabs -->
+        <div class="flex items-center gap-4">
+            <div id="modelSelectBtn" class="flex items-center gap-1 cursor-pointer">
+                <h1 class="text-[#f1f1f1] text-[17px] font-medium tracking-wide" id="currentModelName">Jarvis</h1>
+                <svg class="w-4 h-4 text-[#a3a3a3] mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+            </div>
+
+            <!-- File Manager Tab -->
+            <button id="fileManagerTabBtn" class="text-[#a3a3a3] hover:text-white transition-colors text-sm font-medium px-2 py-1 rounded border border-transparent hover:border-[#3f3f3f] flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                Files
+            </button>
         </div>
 
         <!-- New Chat Button (Ghost Icon) -->
@@ -323,6 +333,21 @@
             <!-- Messages will be injected here via app.js -->
         </div>
 
+    </main>
+
+    <!-- ================= FILE MANAGER AREA ================= -->
+    <main class="hidden flex-1 overflow-y-auto no-scrollbar relative z-10 px-4 pt-4 pb-32 w-full" id="file-manager-container">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-semibold text-[#f1f1f1]">Shared Files</h2>
+            <div class="text-sm text-gray-400" id="fileCount">0 files</div>
+        </div>
+
+        <div id="fileGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- File items will be injected here -->
+            <div class="col-span-full text-center text-gray-500 py-10" id="emptyFilesMsg">
+                No files have been shared in this conversation yet.
+            </div>
+        </div>
     </main>
 
     <!-- ================= INPUT AREA ================= -->
