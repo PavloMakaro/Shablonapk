@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="@color/backgroundColor">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter Access Code"
+        android:textSize="24sp"
+        android:textColor="@color/textColorPrimary"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="An invite code is required to access Jarvis API."
+        android:textSize="14sp"
+        android:textColor="@color/textColorSecondary"
+        android:layout_marginBottom="32dp"
+        android:gravity="center"/>
+
+    <EditText
+        android:id="@+id/etAccessCode"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Access Code"
+        android:textColorHint="@color/textColorSecondary"
+        android:textColor="@color/textColorPrimary"
+        android:background="@drawable/bg_input"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btnSubmitCode"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="Submit"
+        android:textColor="@color/textColorPrimary"
+        android:backgroundTint="@color/buttonColor"/>
+</LinearLayout>

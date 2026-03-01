@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="48dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <!-- Thinking Indicator -->
+    <LinearLayout
+        android:id="@+id/llThinking"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        android:paddingBottom="4dp">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_attach"
+            android:tint="@color/colorAccent"/>
+
+        <TextView
+            android:id="@+id/tvThinking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thinking..."
+            android:textColor="@color/textColorSecondary"
+            android:textSize="14sp"
+            android:paddingStart="8dp"
+            android:textStyle="italic" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_chat_bot"
+        android:textColor="@color/textColorPrimary"
+        android:textSize="16sp"
+        android:padding="12dp"
+        android:lineSpacingExtra="4dp" />
+
+    <!-- Attachments (Images, Videos, Files) -->
+    <LinearLayout
+        android:id="@+id/llAttachments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:paddingTop="8dp" />
+
+</LinearLayout>
