@@ -13,15 +13,31 @@ const chatScreen = document.getElementById('chat-screen');
 const authForm = document.getElementById('auth-form');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
+const accessCodeInput = document.getElementById('accessCode');
 const authBtn = document.getElementById('auth-btn');
 const authError = document.getElementById('auth-error');
 const tabLogin = document.getElementById('tab-login');
 const tabRegister = document.getElementById('tab-register');
-const logoutBtn = document.getElementById('logout-btn');
+const logoutBtn = document.getElementById('logoutBtn');
+const mainApp = document.getElementById('main-app');
+
+// New App Container elements
 const chatContainer = document.getElementById('chat-container');
-const messageInput = document.getElementById('message-input');
-const sendBtn = document.getElementById('send-btn');
-const welcomeMessage = document.getElementById('welcome-message');
+const newChatState = document.getElementById('newChatState');
+const activeChatState = document.getElementById('activeChatState');
+const messageInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+const profileName = document.getElementById('profile-name');
+const profileInitial = document.getElementById('profile-initial');
+const menuBtn = document.getElementById('menuBtn');
+const sidebar = document.getElementById('sidebar');
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+const newChatBtn = document.getElementById('newChatBtn');
+const attachBtn = document.getElementById('attachBtn');
+const attachSheet = document.getElementById('attachSheet');
+const attachSheetBackdrop = document.getElementById('attachSheetBackdrop');
+const closeAttachSheet = document.getElementById('closeAttachSheet');
 
 // Initialize Marked.js
 marked.setOptions({
@@ -51,18 +67,18 @@ authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
+    const accessCode = accessCodeInput.value.trim();
 
-    if (!username || !password) return;
+    if (!username || !password || !accessCode) {
+        authError.textContent = 'All fields are required';
+        return;
+    }
 
     authBtn.disabled = true;
     authError.textContent = '';
 
     try {
         const endpoint = activeTab === 'login' ? '/auth/login' : '/auth/register';
-        // Mock endpoints logic here, assuming typical /auth/login or similar exists per standard auth APIs
-        // Since we MUST use /auth/link_code later, we first attempt standard auth token fetch.
-        // As the instruction specified "Implement the login and registration UI/logic making HTTP calls to http://c11.play2go.cloud:20067",
-        // we send a basic POST.
 
         const response = await fetch(`${API_BASE}${endpoint}`, {
             method: 'POST',
@@ -76,12 +92,11 @@ authForm.addEventListener('submit', async (e) => {
             throw new Error(data.message || data.error || 'Authentication failed');
         }
 
-        // Assume auth returns an access token
         const accessToken = data.access_token || data.token;
         if (!accessToken) throw new Error('No token returned from server');
 
-        // Now STRITCLY request the Access Code via /auth/link_code before chat
-        await requestAccessCode(accessToken);
+        // Now request the Access Code via /auth/link_code
+        await requestAccessCode(accessToken, accessCode, username);
 
     } catch (err) {
         authError.textContent = err.message;
@@ -89,7 +104,7 @@ authForm.addEventListener('submit', async (e) => {
     }
 });
 
-async function requestAccessCode(accessToken) {
+async function requestAccessCode(accessToken, accessCode, username) {
     try {
         authBtn.textContent = 'Linking...';
 
@@ -99,17 +114,19 @@ async function requestAccessCode(accessToken) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`
             },
-            body: JSON.stringify({})
+            body: JSON.stringify({ code: accessCode })
         });
 
         const data = await response.json();
         if (!response.ok) {
-            throw new Error(data.message || data.error || 'Failed to link code');
+            throw new Error(data.message || data.error || 'Code and valid session required');
         }
 
-        // After successfully obtaining the link code (and token if updated), enter chat
+        // Save and update UI
         token = data.access_token || data.token || accessToken;
         localStorage.setItem('jarvis_token', token);
+        localStorage.setItem('jarvis_username', username);
+
         showChat();
 
     } catch (err) {
@@ -121,26 +138,81 @@ async function requestAccessCode(accessToken) {
 
 function logout() {
     localStorage.removeItem('jarvis_token');
+    localStorage.removeItem('jarvis_username');
     token = null;
     if (ws) {
         ws.close();
         ws = null;
     }
-    chatContainer.innerHTML = '<div class="welcome-message" id="welcome-message"><h2>How can I help you today?</h2></div>';
+    activeChatState.innerHTML = '';
+
+    // UI Reset
+    mainApp.classList.add('hidden');
     authScreen.classList.remove('hidden');
-    chatScreen.classList.add('hidden');
+
+    // Reset Chat State
+    activeChatState.classList.add('hidden');
+    activeChatState.classList.remove('flex');
+    newChatState.classList.remove('hidden');
+
+    // Auth Form Reset
     usernameInput.value = '';
     passwordInput.value = '';
+    accessCodeInput.value = '';
     authBtn.disabled = false;
     authBtn.textContent = 'Login';
+
+    toggleSidebar(false);
 }
 
 function showChat() {
     authScreen.classList.add('hidden');
-    chatScreen.classList.remove('hidden');
-    // We connect to websocket later in step 8. For now, we prepare the app.js structure.
+    mainApp.classList.remove('hidden');
+
+    const uName = localStorage.getItem('jarvis_username') || 'User';
+    profileName.textContent = uName;
+    profileInitial.textContent = uName.charAt(0).toUpperCase();
+
     initChat();
 }
+
+const toggleSidebar = (show) => {
+    if(show) {
+        sidebar.classList.remove('-translate-x-full');
+        sidebarBackdrop.classList.remove('opacity-0', 'pointer-events-none');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+        sidebarBackdrop.classList.add('opacity-0', 'pointer-events-none');
+    }
+};
+
+const toggleSheet = (sheet, backdrop, show) => {
+    if(show) {
+        sheet.classList.remove('translate-y-full');
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+    } else {
+        sheet.classList.add('translate-y-full');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+    }
+};
+
+// Sidebar Handlers
+menuBtn.addEventListener('click', () => toggleSidebar(true));
+sidebarBackdrop.addEventListener('click', () => toggleSidebar(false));
+
+// Attach Handlers
+attachBtn.addEventListener('click', () => toggleSheet(attachSheet, attachSheetBackdrop, true));
+closeAttachSheet.addEventListener('click', () => toggleSheet(attachSheet, attachSheetBackdrop, false));
+attachSheetBackdrop.addEventListener('click', () => toggleSheet(attachSheet, attachSheetBackdrop, false));
+
+// New Chat state handler
+newChatBtn.addEventListener('click', () => {
+    activeChatState.classList.add('hidden');
+    activeChatState.classList.remove('flex');
+    newChatState.classList.remove('hidden');
+    messageInput.value = '';
+});
+
 
 function initChat() {
     if (ws) {
@@ -151,7 +223,6 @@ function initChat() {
 
     ws.onopen = () => {
         console.log("WebSocket connected");
-        chatContainer.innerHTML = ''; // clear welcome or old messages
     };
 
     ws.onmessage = (event) => {
@@ -185,7 +256,12 @@ function handleWebSocketMessage(msg) {
             botMsgDiv = createMessageBlock('bot', currentMessageId);
         }
         const contentDiv = botMsgDiv.querySelector('.message-content');
-        contentDiv.innerHTML = `<div class="thinking-block"><span class="thinking-dots">Thinking</span></div>`;
+        contentDiv.innerHTML = `
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-[#c0846c] animate-spin" viewBox="0 0 24 24" fill="currentColor" style="animation-duration: 3s;">
+                    <path d="M12 2L12 6M12 18L12 22M4.9282 4.9282L7.75664 7.75664M16.2434 16.2434L19.0718 19.0718M2 12L6 12M18 12L22 12M4.9282 19.0718L7.75664 16.2434M16.2434 7.75664L19.0718 4.9282" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </div>`;
         scrollToBottom();
     }
     else if (msg.type === 'final_stream') {
@@ -247,45 +323,56 @@ function parseBotAction(action, data) {
     const fileUrl = `${API_BASE}/download/${data.filename}`;
 
     if (action === 'send_photo' || action === 'send_image') {
-        return `<img src="${fileUrl}" alt="Bot sent image" loading="lazy" />`;
+        return `<img src="${fileUrl}" alt="Bot sent image" loading="lazy" class="rounded-xl mt-2 max-w-full" />`;
     }
     else if (action === 'send_video') {
-        return `<video src="${fileUrl}" controls preload="metadata"></video>`;
+        return `<video src="${fileUrl}" controls preload="metadata" class="rounded-xl mt-2 max-w-full"></video>`;
     }
     else if (action === 'send_audio') {
-        return `<audio src="${fileUrl}" controls></audio>`;
+        return `<audio src="${fileUrl}" controls class="mt-2 w-full"></audio>`;
     }
     else if (action === 'send_document') {
-        return `<p><a href="${fileUrl}" target="_blank">📄 Download Document: ${data.filename}</a></p>`;
+        return `<a href="${fileUrl}" target="_blank" class="block mt-2 bg-[#2a2a2c] p-3 rounded-xl hover:bg-[#333] transition text-blue-400">📄 Download: ${data.filename}</a>`;
     }
     return '';
 }
 
 function appendSystemMessage(text) {
     const div = document.createElement('div');
-    div.className = 'message-block';
-    div.innerHTML = `<div class="message-content"><p style="color: #888; text-align: center; width: 100%; font-size: 0.9em;">${text}</p></div>`;
-    chatContainer.appendChild(div);
+    div.className = 'flex justify-center my-4';
+    div.innerHTML = `<div class="text-[#888] text-[0.9em] italic">${text}</div>`;
+    activeChatState.appendChild(div);
     scrollToBottom();
 }
 
 function createMessageBlock(role, id = null) {
-    welcomeMessage?.remove();
+    // Hide new chat state, show active chat
+    if (!newChatState.classList.contains('hidden')) {
+        newChatState.classList.add('hidden');
+        activeChatState.classList.remove('hidden');
+        activeChatState.classList.add('flex');
+    }
+
     const div = document.createElement('div');
-    div.className = `message-block message-${role}`;
     if (id) div.id = id;
 
-    const roleIcon = document.createElement('div');
-    roleIcon.className = `message-role role-${role}`;
-    roleIcon.textContent = role === 'user' ? 'U' : 'J';
+    if (role === 'user') {
+        div.className = 'flex justify-end';
+        div.innerHTML = `
+            <div class="bg-[#2c2d2e] text-[#f1f1f1] px-4 py-3 rounded-[20px] max-w-[80%]">
+                <div class="message-content text-[16px] leading-snug font-normal"></div>
+            </div>
+        `;
+    } else {
+        div.className = 'flex justify-start';
+        div.innerHTML = `
+            <div class="text-[#f1f1f1] w-full max-w-full">
+                <div class="message-content text-[16px] leading-relaxed font-normal"></div>
+            </div>
+        `;
+    }
 
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-
-    div.appendChild(roleIcon);
-    div.appendChild(contentDiv);
-
-    chatContainer.appendChild(div);
+    activeChatState.appendChild(div);
     return div;
 }
 
@@ -302,13 +389,15 @@ if (token) {
     authScreen.classList.remove('hidden');
 }
 
-// Auto-resize textarea
+// Input dynamics
 messageInput.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = (this.scrollHeight) + 'px';
     if(this.value.trim() === '' || isBotTyping) {
+        micBtn.classList.remove('hidden');
+        sendBtn.classList.add('hidden');
         sendBtn.disabled = true;
     } else {
+        micBtn.classList.add('hidden');
+        sendBtn.classList.remove('hidden');
         sendBtn.disabled = false;
     }
 });
@@ -330,7 +419,8 @@ function sendMessage() {
     userMsg.querySelector('.message-content').textContent = text;
 
     messageInput.value = '';
-    messageInput.style.height = 'auto';
+    micBtn.classList.remove('hidden');
+    sendBtn.classList.add('hidden');
     sendBtn.disabled = true;
     messageInput.disabled = true;
     scrollToBottom();
@@ -348,7 +438,12 @@ function sendMessage() {
 
         // Pre-create bot block
         const botMsgDiv = createMessageBlock('bot', currentMessageId);
-        botMsgDiv.querySelector('.message-content').innerHTML = `<div class="thinking-block"><span class="thinking-dots">Thinking</span></div>`;
+        botMsgDiv.querySelector('.message-content').innerHTML = `
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 text-[#c0846c] animate-spin" viewBox="0 0 24 24" fill="currentColor" style="animation-duration: 3s;">
+                    <path d="M12 2L12 6M12 18L12 22M4.9282 4.9282L7.75664 7.75664M16.2434 16.2434L19.0718 19.0718M2 12L6 12M18 12L22 12M4.9282 19.0718L7.75664 16.2434M16.2434 7.75664L19.0718 4.9282" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </div>`;
         scrollToBottom();
     } else {
         appendSystemMessage("Not connected to server. Trying to reconnect...");
