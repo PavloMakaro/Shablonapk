@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis Agent</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar / Top Nav -->
+        <nav class="nav">
+            <button onclick="switchTab('chat')" class="active" id="btn-chat">Chat</button>
+            <button onclick="switchTab('marketplace')" id="btn-marketplace">Marketplace</button>
+            <button onclick="switchTab('settings')" id="btn-settings">Settings</button>
+        </nav>
+
+        <!-- Chat Tab -->
+        <div id="tab-chat" class="tab-content active">
+            <div id="chat-messages" class="messages-container"></div>
+            <div id="thinking-indicator" class="hidden">Jarvis is thinking...</div>
+            <div class="input-area">
+                <input type="text" id="chat-input" placeholder="Message Jarvis..." onkeypress="handleEnter(event)">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <!-- Marketplace Tab -->
+        <div id="tab-marketplace" class="tab-content">
+            <h2>Module Marketplace</h2>
+            <div id="modules-list" class="grid-container">
+                <!-- Modules will be populated here -->
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="tab-settings" class="tab-content">
+            <h2>Settings</h2>
+            <div class="settings-group">
+                <h3>API Keys</h3>
+                <label>DeepSeek API Key:</label>
+                <input type="password" id="setting-deepseek" />
+                <button onclick="saveSetting('deepseek_api_key', 'setting-deepseek')">Save</button>
+
+                <label>Groq API Key:</label>
+                <input type="password" id="setting-groq" />
+                <button onclick="saveSetting('groq_api_key', 'setting-groq')">Save</button>
+
+                <label>Tavily API Key:</label>
+                <input type="password" id="setting-tavily" />
+                <button onclick="saveSetting('tavily_api_key', 'setting-tavily')">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
