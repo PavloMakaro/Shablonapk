@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#1A1A1A</color>
+    <color name="colorPrimaryDark">#121212</color>
+    <color name="colorAccent">#4F8FFF</color>
+
+    <color name="backgroundColor">#121212</color>
+    <color name="surfaceColor">#1E1E1E</color>
+    <color name="textColorPrimary">#FFFFFF</color>
+    <color name="textColorSecondary">#A0A0A0</color>
+
+    <color name="chatUserBg">#2D2D2D</color>
+    <color name="chatBotBg">#1A1A1A</color>
+
+    <color name="buttonColor">#2A2A2A</color>
+</resources>
